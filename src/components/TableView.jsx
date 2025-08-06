@@ -229,9 +229,14 @@ const TableView = ({ bookings, setBookings }) => {
 
   // Export functions
   const exportCSV = () => {
+    // Check if any data has Itwari parking to include Spot No. column
+    const hasItwariParking = filteredData.some(
+      (item) => item.parking_name === "Itwari"
+    );
+
     // Create a formatted version of the data
     const formattedData = filteredData.map((item, idx) => {
-      return {
+      const baseData = {
         "Sr. No.": idx + 1,
         "Parking Name": item.parking_name || "",
         "Date & Time": item.start_date ? formatTimestamp(item.start_date) : "",
@@ -241,6 +246,16 @@ const TableView = ({ bookings, setBookings }) => {
         "Vehicle Number": item.vehicle_number || "",
         "Machine ID": item.machine || "",
         "Pallet No.": item.pallet_no || "",
+      };
+
+      // Add Spot No. column only if Itwari parking exists in the data
+      if (hasItwariParking) {
+        baseData["Spot No."] =
+          item.parking_name === "Itwari" ? item.spot_no || "" : "";
+      }
+
+      // Add remaining columns
+      const remainingData = {
         "Token No.": item.token_no || "",
         Status: item.isCancel
           ? "Cancelled"
@@ -270,6 +285,8 @@ const TableView = ({ bookings, setBookings }) => {
         "Booking End Time": item.end_time ? formatTimestamp(item.end_time) : "",
         "Amount Received (₹)": item.amount || "",
       };
+
+      return { ...baseData, ...remainingData };
     });
 
     // Generate CSV
@@ -291,9 +308,14 @@ const TableView = ({ bookings, setBookings }) => {
   // Enhanced export functions with WebView support
   const exportExcel = () => {
     try {
-      // Use the same formatted data as before
+      // Check if any data has Itwari parking to include Spot No. column
+      const hasItwariParking = filteredData.some(
+        (item) => item.parking_name === "Itwari"
+      );
+
+      // Use the same formatted data as CSV export
       const formattedData = filteredData.map((item, idx) => {
-        return {
+        const baseData = {
           "Sr. No.": idx + 1,
           "Parking Name": item.parking_name || "",
           "Date & Time": item.start_date
@@ -305,6 +327,16 @@ const TableView = ({ bookings, setBookings }) => {
           "Vehicle Number": item.vehicle_number || "",
           "Machine ID": item.machine || "",
           "Pallet No.": item.pallet_no || "",
+        };
+
+        // Add Spot No. column only if Itwari parking exists in the data
+        if (hasItwariParking) {
+          baseData["Spot No."] =
+            item.parking_name === "Itwari" ? item.spot_no || "" : "";
+        }
+
+        // Add remaining columns
+        const remainingData = {
           "Token No.": item.token_no || "",
           Status: item.isCancel
             ? "Cancelled"
@@ -336,6 +368,8 @@ const TableView = ({ bookings, setBookings }) => {
             : "",
           "Amount Received (₹)": item.amount || "",
         };
+
+        return { ...baseData, ...remainingData };
       });
 
       // Generate Excel
@@ -537,23 +571,43 @@ const TableView = ({ bookings, setBookings }) => {
   };
 
   // Column definitions for the table (used for headers on larger screens, and labels on smaller)
-  const columns = [
-    { key: "sr_no", label: "Sr. No.", sortable: false },
-    { key: "parking_name", label: "Parking Name", sortable: true },
-    { key: "start_date", label: "Date & Time", sortable: true },
-    { key: "name", label: "Customer Name", sortable: true },
-    { key: "phone_no", label: "Contact Number", sortable: true },
-    { key: "vehicle_type", label: "Vehicle Type", sortable: true },
-    { key: "vehicle_number", label: "Vehicle Number", sortable: true },
-    { key: "machine", label: "Machine ID", sortable: true },
-    { key: "pallet_no", label: "Pallet No.", sortable: true },
-    { key: "token_no", label: "Token No.", sortable: true },
-    { key: "status", label: "Status", sortable: true },
-    { key: "start_time", label: "Start Time", sortable: true },
-    { key: "end_time", label: "End Time", sortable: true },
-    { key: "amount", label: "Amount (₹)", sortable: true },
-    { key: "actions", label: "Actions", sortable: false },
-  ];
+  const getColumns = () => {
+    const baseColumns = [
+      { key: "sr_no", label: "Sr. No.", sortable: false },
+      { key: "parking_name", label: "Parking Name", sortable: true },
+      { key: "start_date", label: "Date & Time", sortable: true },
+      { key: "name", label: "Customer Name", sortable: true },
+      { key: "phone_no", label: "Contact Number", sortable: true },
+      { key: "vehicle_type", label: "Vehicle Type", sortable: true },
+      { key: "vehicle_number", label: "Vehicle Number", sortable: true },
+      { key: "machine", label: "Machine ID", sortable: true },
+      { key: "pallet_no", label: "Pallet No.", sortable: true },
+    ];
+
+    // Check if any filtered data has parking_name as "Itwari"
+    const hasItwariParking = filteredData.some(
+      (booking) => booking.parking_name === "Itwari"
+    );
+
+    // Add spot_no column only if Itwari parking exists in filtered data
+    if (hasItwariParking) {
+      baseColumns.push({ key: "spot_no", label: "Spot No.", sortable: true });
+    }
+
+    // Add remaining columns
+    baseColumns.push(
+      { key: "token_no", label: "Token No.", sortable: true },
+      { key: "status", label: "Status", sortable: true },
+      { key: "start_time", label: "Start Time", sortable: true },
+      { key: "end_time", label: "End Time", sortable: true },
+      { key: "amount", label: "Amount (₹)", sortable: true },
+      { key: "actions", label: "Actions", sortable: false }
+    );
+
+    return baseColumns;
+  };
+
+  const columns = getColumns();
 
   return (
     <div className="p-4 sm:p-6 mb-30">
@@ -694,6 +748,14 @@ const TableView = ({ bookings, setBookings }) => {
                     <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
                       {booking.pallet_no || "-"}
                     </td>
+                    {/* Conditionally render Spot No. column only for Itwari parking */}
+                    {filteredData.some((b) => b.parking_name === "Itwari") && (
+                      <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
+                        {booking.parking_name === "Itwari"
+                          ? booking.spot_no || "-"
+                          : "-"}
+                      </td>
+                    )}
                     <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
                       {booking.token_no || "-"}
                     </td>
@@ -835,6 +897,13 @@ const TableView = ({ bookings, setBookings }) => {
                 {columns.map((column) => {
                   if (column.key === "sr_no" || column.key === "actions")
                     return null; // Handled separately
+
+                  // Skip spot_no column in mobile view if not Itwari parking
+                  if (
+                    column.key === "spot_no" &&
+                    booking.parking_name !== "Itwari"
+                  )
+                    return null;
                   let displayValue;
                   switch (column.key) {
                     case "start_date":
@@ -871,6 +940,13 @@ const TableView = ({ bookings, setBookings }) => {
                       displayValue = booking.amount
                         ? `₹${booking.amount}`
                         : "-";
+                      break;
+                    case "spot_no":
+                      // Show spot_no only for Itwari parking, otherwise show "-"
+                      displayValue =
+                        booking.parking_name === "Itwari"
+                          ? booking.spot_no || "-"
+                          : "-";
                       break;
                     default:
                       displayValue = booking[column.key] || "-";
