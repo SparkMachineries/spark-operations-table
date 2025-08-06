@@ -19,7 +19,7 @@ import {
 import FilterBar from "./FilterBar";
 import StatusCard from "./StatusCard";
 
-const Dashboard = ({ bookings }) => {
+const Dashboard = ({ bookings, monthlyPasses = [] }) => {
   const navigate = useNavigate();
   const [filteredData, setFilteredData] = useState(bookings);
   const [dateRange, setDateRange] = useState({ start: null, end: null });
@@ -106,6 +106,16 @@ const Dashboard = ({ bookings }) => {
       })
       .reduce((sum, booking) => sum + (parseInt(booking.amount) || 0), 0);
   })();
+
+  // Monthly Pass Stats
+  const totalMonthlyPasses = monthlyPasses.length;
+  const activeMonthlyPasses = monthlyPasses.filter(
+    (pass) => pass.status === "active"
+  ).length;
+  const monthlyPassRevenue = monthlyPasses.reduce(
+    (sum, pass) => sum + (parseInt(pass.amount) || 0),
+    0
+  );
   // Parking-wise distribution for Pie Chart
   const getParkingDistribution = () => {
     const parkingCounts = {};
@@ -223,7 +233,7 @@ const Dashboard = ({ bookings }) => {
       />
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <StatusCard
           title="Total Bookings"
           value={totalBookings}
@@ -349,6 +359,28 @@ const Dashboard = ({ bookings }) => {
               },
             });
           }}
+        />
+        <StatusCard
+          title="Active Passes"
+          value={activeMonthlyPasses}
+          icon={
+            <svg
+              className="w-8 h-8"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0z"
+              ></path>
+            </svg>
+          }
+          color="indigo"
+          onClick={() => navigate("/monthly-passes")}
         />
       </div>
 

@@ -130,6 +130,18 @@ const Header = () => {
           >
             Bookings Table
           </NavLink>
+
+          <NavLink
+            to="/monthly-passes"
+            className={({ isActive }) =>
+              `block py-3 px-4 ${
+                isActive ? "bg-blue-700" : "hover:bg-blue-700"
+              }`
+            }
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Monthly Passes
+          </NavLink>
         </div>
       )}
     </header>
